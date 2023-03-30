@@ -1,7 +1,7 @@
 #!/bin/bash
 # Generate config and secrets required to host your own outline server
-. ./config.sh
-. ./utils.sh
+source ./config.properties
+source ./utils.sh
 
 # update config file
 MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-`openssl rand -hex 8`}
