@@ -1,23 +1,26 @@
-version: "3"
+version: "3.7"
 services:
-  wk-redis:
-    image: redis:latest
+  redis:
+    image: reg.haiyisec.com/redis:latest
     restart: always
     networks:
       - ${NETWORKS}
-  wk-postgres:
-    image: postgres:${POSTGRES_VERSION}
+  postgres:
+    image: reg.haiyisec.com/postgres:${POSTGRES_VERSION}
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: outline
+      POSTGRES_PASSWORD: outline
       POSTGRES_DB: outline
+      KEYCLOAK_USER: keycloak
+      KEYCLOAK_PASSWORD: keycloak
     volumes:
       - ./data/pgdata:/var/lib/postgresql/data
+      - ./config/init/:/docker-entrypoint-initdb.d/
     restart: always
     networks:
       - ${NETWORKS}
-  wk-minio:
-    image: minio/minio:${MINIO_VERSION}
+  minio:
+    image: reg.haiyisec.com/minio/minio:${MINIO_VERSION}
     volumes:
       - ./data/minio_root:/minio_root:z
       - ./data/certs:/root/.minio/certs:z
@@ -27,62 +30,73 @@ services:
     restart: always
     networks:
       - ${NETWORKS}
-  wk-createbuckets:
-    image: minio/mc:${MINIO_MC_VERSION}
+  createbuckets:
+    image: reg.haiyisec.com/minio/mc:${MINIO_MC_VERSION}
     depends_on:
-      - wk-minio
+      - minio
     env_file:
       - ./env.minio
     entrypoint: >
       /bin/sh -c "
-      until (/usr/bin/mc config host add minio http://wk-minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY}) do echo '...waiting...' && sleep 1; done;
+      until (/usr/bin/mc config host add minio http://minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY}) do echo '...waiting...' && sleep 1; done;
       /usr/bin/mc mb minio/outline-bucket;
       /usr/bin/mc anonymous set download minio/outline-bucket;
       exit 0;
       "
     networks:
       - ${NETWORKS}
-  wk-outline:
-    image: outlinewiki/outline:${OUTLINE_VERSION}
+  outline:
+    image: reg.haiyisec.com/outlinewiki/outline:latest
     command: sh -c "yarn db:migrate --env production-ssl-disabled && yarn start"
     environment:
-      - DATABASE_URL=postgres://user:pass@wk-postgres:5432/outline
-      - DATABASE_URL_TEST=postgres://user:pass@wk-postgres:5432/outline-test
-      - REDIS_URL=redis://wk-redis:6379
+      - DATABASE_URL=postgres://outline:outline@postgres:5432/outline
+      - DATABASE_URL_TEST=postgres://outline:outline@postgres:5432/outline-test
+      - REDIS_URL=redis://redis:6379
       - AWS_S3_UPLOAD_BUCKET_NAME=outline-bucket
     env_file:
       - ./env.outline
       - ./env.oidc
     restart: always
     depends_on:
-      - wk-postgres
-      - wk-redis
-      - wk-minio
+      - postgres
+      - redis
+      - minio
     networks:
       - ${NETWORKS}
-  wk-oidc-server:
-    image: vicalloy/oidc-server
-    volumes:
-      - ./config/uc/fixtures:/app/oidc_server/fixtures:z
-      - ./data/uc/db:/app/db:z
-      - ./data/uc/static_root:/app/static_root:z
-    restart: always
-    env_file:
-      - ./env.oidc-server
-    networks:
-      - ${NETWORKS}
-  wk-nginx:
-    image: nginx
-    ports:
-      - ${HTTP_IP}:${HTTP_PORT_IP}:80
-    volumes:
-      - ./config/nginx/:/etc/nginx/conf.d/:ro
-      - ./data/uc/static_root:/uc/static_root:ro
+  keycloak:
+    image: reg.haiyisec.com/keycloak/keycloak:${KEYCLOAK_VERSION}
+    command: start-dev
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=change_me
+      - KC_DB=postgres
+      - KC_DB_URL_HOST=postgres
+      - KC_DB_URL_DATABASE=outline
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+      - KC_DB_SCHEMA=keycloak
+      - PROXY_ADDRESS_FORWARDING=true
+      - KC_HOSTNAME=wiki.haiyisec.com
+      - KC_HTTP_RELATIVE_PATH=/keycloak/
+      - KC_PROXY=edge
     restart: always
     depends_on:
-      - wk-minio
-      - wk-outline
-      - wk-oidc-server
+      - postgres
+    networks:
+      - ${NETWORKS}
+  nginx:
+    image: reg.haiyisec.com/nginx:stable-alpine3.17
+    ports:
+      - 443:443
+      - 80:80
+    volumes:
+      - ./config/nginx/:/etc/nginx/conf.d/:ro
+      - ./config/certs:/etc/nginx/certs:ro
+    restart: always
+    depends_on:
+      - minio
+      - outline
+      - keycloak
     networks:
       - ${NETWORKS}
 networks:

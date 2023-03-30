@@ -1,4 +1,3 @@
-oidc_server_container=wk-oidc-server
 docker-compose := $(shell command -v docker-compose 2> /dev/null || echo "docker compose")
 
 gen-conf:
@@ -10,10 +9,6 @@ start:
 	cd ./scripts && bash ./main.sh reload_nginx
 
 install: gen-conf start
-	sleep 1
-	${docker-compose} exec ${oidc_server_container} bash -c "make init"
-	${docker-compose} exec ${oidc_server_container} bash -c "python manage.py loaddata oidc-server-outline-client"
-	cd ./scripts && bash ./main.sh reload_nginx
 
 restart: stop start
 
@@ -30,9 +25,9 @@ clean-docker: stop
 	${docker-compose} rm -fsv || true
 
 clean-conf:
-	rm -rfv env.* .env docker-compose.yml config/uc/fixtures/*.json
+	rm -rfv env.* .env docker-compose.yml
 
 clean-data: clean-docker
-	rm -rfv ./data/certs ./data/minio_root ./data/pgdata ./data/uc
+	rm -rfv ./data/certs ./data/minio_root ./data/pgdata
 
 clean: clean-docker clean-conf
