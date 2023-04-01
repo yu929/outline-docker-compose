@@ -10,10 +10,10 @@ OUTLINE_SECRET_KEY=${OUTLINE_SECRET_KEY:-`openssl rand -hex 32`}
 OUTLINE_UTILS_SECRET=${OUTLINE_UTILS_SECRET:-`openssl rand -hex 32`}
 
 function update_config_file {
-    env_replace MINIO_ACCESS_KEY $MINIO_ACCESS_KEY config.sh
-    env_replace MINIO_SECRET_KEY $MINIO_SECRET_KEY config.sh
-    env_replace OUTLINE_SECRET_KEY $OUTLINE_SECRET_KEY config.sh
-    env_replace OUTLINE_UTILS_SECRET $OUTLINE_UTILS_SECRET config.sh
+    env_replace MINIO_ACCESS_KEY $MINIO_ACCESS_KEY config.properties
+    env_replace MINIO_SECRET_KEY $MINIO_SECRET_KEY config.properties
+    env_replace OUTLINE_SECRET_KEY $OUTLINE_SECRET_KEY config.properties
+    env_replace OUTLINE_UTILS_SECRET $OUTLINE_UTILS_SECRET config.properties
 }
 
 function create_global_env_file {
