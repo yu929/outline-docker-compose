@@ -2,17 +2,20 @@ version: "3.7"
 services:
   redis:
     image: reg.haiyisec.com/redis:latest
+    environment:
+      - TZ=Asia/Shanghai
     restart: always
     networks:
       - ${NETWORKS}
   postgres:
     image: reg.haiyisec.com/postgres:${POSTGRES_VERSION}
     environment:
-      POSTGRES_USER: outline
-      POSTGRES_PASSWORD: outline
-      POSTGRES_DB: outline
-      KEYCLOAK_USER: keycloak
-      KEYCLOAK_PASSWORD: keycloak
+      - POSTGRES_USER=outline
+      - POSTGRES_PASSWORD=outline
+      - POSTGRES_DB=outline
+      - KEYCLOAK_USER=keycloak
+      - KEYCLOAK_PASSWORD=keycloak
+      - TZ=Asia/Shanghai
     volumes:
       - ./data/pgdata:/var/lib/postgresql/data
       - ./config/init/:/docker-entrypoint-initdb.d/
@@ -21,6 +24,8 @@ services:
       - ${NETWORKS}
   minio:
     image: reg.haiyisec.com/minio/minio:${MINIO_VERSION}
+    environment:
+      - TZ=Asia/Shanghai
     volumes:
       - ./data/minio_root:/minio_root:z
       - ./data/certs:/root/.minio/certs:z
@@ -53,6 +58,10 @@ services:
       - DATABASE_URL_TEST=postgres://outline:outline@postgres:5432/outline-test
       - REDIS_URL=redis://redis:6379
       - AWS_S3_UPLOAD_BUCKET_NAME=outline-bucket
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+      - TZ=Asia/Shanghai
+    extra_hosts:
+      - "${HOST_NAME}:${HOST_IP}"
     env_file:
       - ./env.outline
       - ./env.oidc
@@ -68,7 +77,7 @@ services:
     command: start-dev
     environment:
       - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=change_me
+      - KEYCLOAK_ADMIN_PASSWORD=changeme
       - KC_DB=postgres
       - KC_DB_URL_HOST=postgres
       - KC_DB_URL_DATABASE=outline
@@ -76,9 +85,10 @@ services:
       - KC_DB_PASSWORD=keycloak
       - KC_DB_SCHEMA=keycloak
       - PROXY_ADDRESS_FORWARDING=true
-      - KC_HOSTNAME=wiki.haiyisec.com
+      - KC_HOSTNAME=${HOST_NAME}
       - KC_HTTP_RELATIVE_PATH=/keycloak/
       - KC_PROXY=edge
+      - TZ=Asia/Shanghai
     restart: always
     depends_on:
       - postgres
@@ -86,11 +96,12 @@ services:
       - ${NETWORKS}
   nginx:
     image: reg.haiyisec.com/nginx:stable-alpine3.17
+    environment:
+      - TZ=Asia/Shanghai
     ports:
       - 443:443
-      - 80:80
     volumes:
-      - ./config/nginx/:/etc/nginx/conf.d/:ro
+      - ./config/nginx/conf.d/:/etc/nginx/conf.d/:ro
       - ./config/certs:/etc/nginx/certs:ro
     restart: always
     depends_on:

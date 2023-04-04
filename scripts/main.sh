@@ -23,12 +23,13 @@ function create_global_env_file {
     env_replace NETWORKS $NETWORKS $env_file
     env_replace NETWORKS_EXTERNAL $NETWORKS_EXTERNAL $env_file
     # NGINX
-    env_replace HTTP_IP $HTTP_IP $env_file
+    env_replace HOST_IP $HOST_IP $env_file
     # Docker image version
     env_replace POSTGRES_VERSION $POSTGRES_VERSION $env_file
     env_replace KEYCLOAK_VERSION $KEYCLOAK_VERSION $env_file
     env_replace MINIO_VERSION $MINIO_VERSION $env_file
     env_replace MINIO_MC_VERSION $MINIO_MC_VERSION $env_file
+    env_replace HOST_NAME $HOST_NAME $env_file
 }
 
 function create_minio_env_file {
@@ -66,16 +67,29 @@ function create_outline_env_file {
     env_replace AWS_S3_UPLOAD_BUCKET_URL $URL $env_file
 
     env_add PGSSLMODE disable $env_file
+}
 
+function create_oidc_env_file {
     fn=env.oidc
     env_file=../$fn
     cp ./templates/$fn $env_file
+
+    env_tmpl_replace HOST_NAME "$HOST_NAME" $env_file
+    env_tmpl_replace REALM_NAME "$REALM_NAME" $env_file
+}
+
+function deal_nginx_config_file {
+    fn=default.conf
+    file=../config/nginx/conf.d/$fn
+
+    env_tmpl_replace HOST_NAME "$HOST_NAME" $file
 }
 
 function create_env_files {
     create_global_env_file
     create_minio_env_file
     create_outline_env_file
+    create_oidc_env_file
 }
 
 function create_docker_compose_file {
@@ -92,6 +106,7 @@ function init_cfg {
     update_config_file
     create_docker_compose_file
     create_env_files
+    deal_nginx_config_file
 }
 
 function reload_nginx {
