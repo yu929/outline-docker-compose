@@ -21,13 +21,7 @@
 ## 注意事项
 - docker compose文件中，镜像使用了公司私库地址，自行修改
 - 第一次登录到outline，100%会超时或者502，这个估计是outline的问题。等2-3分钟，后台日志出现下面的日志，浏览器点后退，就自动进去了（此处必须要等出现这些日志再点后退，否则就会又再次触发初始化，导致有两个wiki）
-    ```
-outline-docker-compose-outline-1        | {"name":"users.create","modelId":null,"attempt":0,"label":"worker","level":"info","message":"Processing users.create"}
-outline-docker-compose-outline-1        | {"templateName":"WelcomeEmail","props":{"to":"yanghuaiyu@haiyisec.com","teamUrl":"https://172.17.94.201"},"label":"worker","level":"info","message":"EmailTask running"}
-outline-docker-compose-outline-1        | {"label":"email","level":"info","message":"Attempted to send email \"Welcome to Outline\" to yanghuaiyu@haiyisec.com but no transport configured."}
-outline-docker-compose-outline-1        | {"name":"users.create","modelId":null,"label":"worker","level":"info","message":"AvatarProcessor running users.create"}
-outline-docker-compose-outline-1        | {"name":"users.create","modelId":null,"label":"worker","level":"info","message":"WebhookProcessor running users.create"}
-outline-docker-compose-outline-1        | {"name":"users.signin","modelId":null,"attempt":0,"label":"worker","level":"info","message":"Processing users.signin"}
-outline-docker-compose-outline-1        | {"name":"users.signin","modelId":null,"label":"worker","level":"info","message":"WebhookProcessor running users.signin"}
+    ``` 
+    outline-docker-compose-outline-1        | {"name":"users.create","modelId":null,"label":"worker","level":"info","message":"AvatarProcessor running users.create"}outline-docker-compose-outline-1        | {"name":"users.create","modelId":null,"label":"worker","level":"info","message":"WebhookProcessor running users.create"}outline-docker-compose-outline-1        | {"name":"users.signin","modelId":null,"attempt":0,"label":"worker","level":"info","message":"Processing users.signin"}outline-docker-compose-outline-1        | {"name":"users.signin","modelId":null,"label":"worker","level":"info","message":"WebhookProcessor running users.signin"}
     ```
 - 项目默认使用ssl和443端口，需要调整的自行修改
